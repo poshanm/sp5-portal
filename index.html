@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#080d14">
+<title>⚡ SP5 Electrical Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#080d14;--surf:#0e1520;--card:#131e2e;--border:#1e2d42;
+  --text:#dce8f5;--muted:#5a7090;--accent:#3d8ef0;--green:#20c472;
+  --sans:'Sora',sans-serif;
+}
+html,body{height:100%;font-family:var(--sans);background:var(--bg);color:var(--text);overflow:hidden;}
+
+/* TOP SWITCHER */
+.switcher{
+  position:fixed;top:0;left:0;right:0;z-index:1000;
+  background:var(--surf);border-bottom:1px solid var(--border);
+  display:flex;align-items:stretch;height:52px;
+}
+.sw-btn{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:8px;
+  font-size:15px;font-weight:700;color:var(--muted);cursor:pointer;
+  border-bottom:3px solid transparent;transition:all .2s;
+  background:none;border:none;border-bottom:3px solid transparent;
+  font-family:var(--sans);
+}
+.sw-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+.sw-divider{width:1px;background:var(--border);margin:10px 0;}
+
+/* FRAMES */
+.frame-wrap{position:fixed;top:52px;left:0;right:0;bottom:0;}
+.frame{
+  position:absolute;inset:0;width:100%;height:100%;
+  border:none;background:var(--bg);
+  transition:opacity .25s, transform .25s;
+}
+.frame.hidden{
+  opacity:0;pointer-events:none;
+  transform:translateX(40px);
+}
+
+/* LOADING SCREEN */
+#loader{
+  position:fixed;inset:0;background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:16px;z-index:500;transition:opacity .4s;
+}
+#loader.done{opacity:0;pointer-events:none;}
+.load-logo{font-size:48px;}
+.load-title{font-size:22px;font-weight:700;color:var(--accent);}
+.load-sub{font-size:14px;color:var(--muted);}
+.load-bar{width:200px;height:3px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:8px;}
+.load-bar-fill{height:100%;width:0%;background:var(--accent);border-radius:3px;transition:width .4s;}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loader">
+  <div class="load-logo">⚡</div>
+  <div class="load-title">SP5 Electrical</div>
+  <div class="load-sub">Loading apps...</div>
+  <div class="load-bar"><div class="load-bar-fill" id="loadBar"></div></div>
+</div>
+
+<!-- TOP SWITCHER -->
+<div class="switcher">
+  <button class="sw-btn active" id="sw0" onclick="switchApp(0)">
+    ⚡ OT Dashboard
+  </button>
+  <div class="sw-divider"></div>
+  <button class="sw-btn" id="sw1" onclick="switchApp(1)">
+    🏭 SP5 Electrical
+  </button>
+</div>
+
+<!-- FRAMES -->
+<div class="frame-wrap">
+  <iframe
+    id="frame0"
+    class="frame"
+    src="https://poshanm.github.io/OT-dashboard_AI/"
+    title="OT Dashboard"
+    loading="eager"
+  ></iframe>
+  <iframe
+    id="frame1"
+    class="frame hidden"
+    src=""
+    data-src="https://poshanm.github.io/sp5-electrical/"
+    title="SP5 Electrical"
+    loading="lazy"
+  ></iframe>
+</div>
+
+<script>
+let _active = 0;
+let _loaded  = [true, false]; // frame0 loads eagerly
+
+function switchApp(idx) {
+  if(idx === _active) return;
+
+  // Lazy load frame1 on first switch
+  const frame = document.getElementById('frame'+idx);
+  if(!_loaded[idx]){
+    _loaded[idx] = true;
+    frame.src = frame.dataset.src;
+  }
+
+  // Hide current, show new
+  document.getElementById('frame'+_active).classList.add('hidden');
+  frame.classList.remove('hidden');
+
+  // Update switcher buttons
+  document.getElementById('sw'+_active).classList.remove('active');
+  document.getElementById('sw'+idx).classList.add('active');
+
+  _active = idx;
+}
+
+// Hide loader once first frame loads
+const f0 = document.getElementById('frame0');
+let _progress = 0;
+
+function tickLoader(){
+  _progress = Math.min(_progress + Math.random()*15, 90);
+  document.getElementById('loadBar').style.width = _progress + '%';
+}
+const loadTick = setInterval(tickLoader, 200);
+
+f0.addEventListener('load', function(){
+  clearInterval(loadTick);
+  document.getElementById('loadBar').style.width = '100%';
+  setTimeout(()=>{ document.getElementById('loader').classList.add('done'); }, 400);
+});
+
+// Fallback — hide loader after 5s anyway
+setTimeout(()=>{ document.getElementById('loader').classList.add('done'); }, 5000);
+</script>
+</body>
+</html>
