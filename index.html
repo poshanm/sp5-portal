@@ -4,58 +4,106 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#080d14">
 <title>⚡ SP5 Electrical Portal</title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
-  --bg:#080d14;--surf:#0e1520;--card:#131e2e;--border:#1e2d42;
-  --text:#dce8f5;--muted:#5a7090;--accent:#3d8ef0;--green:#20c472;
+  --bg:#080d14;--surf:#0e1520;--border:#1e2d42;
+  --text:#dce8f5;--muted:#5a7090;--accent:#3d8ef0;
   --sans:'Sora',sans-serif;
+  --sw:52px;
 }
-html,body{height:100%;font-family:var(--sans);background:var(--bg);color:var(--text);overflow:hidden;}
+html,body{
+  height:100%;width:100%;
+  font-family:var(--sans);
+  background:var(--bg);color:var(--text);
+  /* FIX 1: Allow vertical scroll, prevent pull-to-refresh */
+  overflow:hidden;
+  overscroll-behavior:none;
+  -webkit-overflow-scrolling:touch;
+}
+
+/* FIX 3: Prevent pull-to-refresh on the portal itself */
+body{
+  overscroll-behavior-y:contain;
+  touch-action:pan-x pan-y;
+}
 
 /* TOP SWITCHER */
 .switcher{
-  position:fixed;top:0;left:0;right:0;z-index:1000;
-  background:var(--surf);border-bottom:1px solid var(--border);
-  display:flex;align-items:stretch;height:52px;
+  position:fixed;top:0;left:0;right:0;
+  z-index:1000;height:var(--sw);
+  background:var(--surf);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:stretch;
+  /* Prevent switcher from triggering scroll */
+  touch-action:none;
 }
 .sw-btn{
-  flex:1;display:flex;align-items:center;justify-content:center;gap:8px;
-  font-size:15px;font-weight:700;color:var(--muted);cursor:pointer;
-  border-bottom:3px solid transparent;transition:all .2s;
-  background:none;border:none;border-bottom:3px solid transparent;
-  font-family:var(--sans);
+  flex:1;display:flex;align-items:center;
+  justify-content:center;gap:8px;
+  font-size:15px;font-weight:700;
+  color:var(--muted);cursor:pointer;
+  border:none;border-bottom:3px solid transparent;
+  background:none;font-family:var(--sans);
+  transition:color .2s,border-color .2s;
+  /* Prevent text selection on tap */
+  user-select:none;-webkit-user-select:none;
 }
 .sw-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
-.sw-divider{width:1px;background:var(--border);margin:10px 0;}
+.sw-btn:active{opacity:.75;}
+.sw-divider{width:1px;background:var(--border);margin:10px 0;flex-shrink:0;}
 
-/* FRAMES */
-.frame-wrap{position:fixed;top:52px;left:0;right:0;bottom:0;}
+/* FRAME WRAPPER — exactly fills remaining space */
+.frame-wrap{
+  position:fixed;
+  top:var(--sw);left:0;right:0;bottom:0;
+  overflow:hidden;
+}
+
+/* EACH FRAME — FIX 1: overflow-y:scroll for vertical scroll inside */
 .frame{
-  position:absolute;inset:0;width:100%;height:100%;
-  border:none;background:var(--bg);
-  transition:opacity .25s, transform .25s;
+  position:absolute;inset:0;
+  width:100%;height:100%;
+  border:none;
+  background:var(--bg);
+  /* FIX 1+2: Allow both scroll directions inside iframe */
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
+  transition:opacity .2s, transform .2s;
 }
 .frame.hidden{
-  opacity:0;pointer-events:none;
-  transform:translateX(40px);
+  opacity:0;
+  pointer-events:none;
+  transform:translateX(30px);
 }
 
 /* LOADING SCREEN */
 #loader{
-  position:fixed;inset:0;background:var(--bg);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:16px;z-index:500;transition:opacity .4s;
+  position:fixed;inset:0;
+  background:var(--bg);
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:16px;z-index:500;
+  transition:opacity .4s;
 }
 #loader.done{opacity:0;pointer-events:none;}
-.load-logo{font-size:48px;}
+.load-logo{font-size:52px;}
 .load-title{font-size:22px;font-weight:700;color:var(--accent);}
 .load-sub{font-size:14px;color:var(--muted);}
-.load-bar{width:200px;height:3px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:8px;}
-.load-bar-fill{height:100%;width:0%;background:var(--accent);border-radius:3px;transition:width .4s;}
+.load-bar{
+  width:200px;height:3px;
+  background:var(--border);border-radius:3px;
+  overflow:hidden;margin-top:8px;
+}
+.load-fill{
+  height:100%;width:0;
+  background:var(--accent);border-radius:3px;
+  transition:width .35s;
+}
 </style>
 </head>
 <body>
@@ -64,19 +112,15 @@ html,body{height:100%;font-family:var(--sans);background:var(--bg);color:var(--t
 <div id="loader">
   <div class="load-logo">⚡</div>
   <div class="load-title">SP5 Electrical</div>
-  <div class="load-sub">Loading apps...</div>
-  <div class="load-bar"><div class="load-bar-fill" id="loadBar"></div></div>
+  <div class="load-sub">Apps load ho rahi hain...</div>
+  <div class="load-bar"><div class="load-fill" id="loadBar"></div></div>
 </div>
 
-<!-- TOP SWITCHER -->
+<!-- SWITCHER -->
 <div class="switcher">
-  <button class="sw-btn active" id="sw0" onclick="switchApp(0)">
-    ⚡ OT Dashboard
-  </button>
+  <button class="sw-btn active" id="sw0" onclick="switchApp(0)">⚡ OT Dashboard</button>
   <div class="sw-divider"></div>
-  <button class="sw-btn" id="sw1" onclick="switchApp(1)">
-    🏭 SP5 Electrical
-  </button>
+  <button class="sw-btn" id="sw1" onclick="switchApp(1)">🏭 SP5 Electrical</button>
 </div>
 
 <!-- FRAMES -->
@@ -86,7 +130,7 @@ html,body{height:100%;font-family:var(--sans);background:var(--bg);color:var(--t
     class="frame"
     src="https://poshanm.github.io/OT-dashboard_AI/"
     title="OT Dashboard"
-    loading="eager"
+    sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-top-navigation-by-user-activation"
   ></iframe>
   <iframe
     id="frame1"
@@ -94,53 +138,55 @@ html,body{height:100%;font-family:var(--sans);background:var(--bg);color:var(--t
     src=""
     data-src="https://poshanm.github.io/sp5-electrical/"
     title="SP5 Electrical"
-    loading="lazy"
+    sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-top-navigation-by-user-activation"
   ></iframe>
 </div>
 
 <script>
 let _active = 0;
-let _loaded  = [true, false]; // frame0 loads eagerly
+let _loaded  = [true, false];
 
 function switchApp(idx) {
-  if(idx === _active) return;
+  if (idx === _active) return;
+  const frame = document.getElementById('frame' + idx);
 
-  // Lazy load frame1 on first switch
-  const frame = document.getElementById('frame'+idx);
-  if(!_loaded[idx]){
+  // Lazy load on first switch
+  if (!_loaded[idx]) {
     _loaded[idx] = true;
     frame.src = frame.dataset.src;
   }
 
-  // Hide current, show new
-  document.getElementById('frame'+_active).classList.add('hidden');
+  document.getElementById('frame' + _active).classList.add('hidden');
   frame.classList.remove('hidden');
-
-  // Update switcher buttons
-  document.getElementById('sw'+_active).classList.remove('active');
-  document.getElementById('sw'+idx).classList.add('active');
-
+  document.getElementById('sw' + _active).classList.remove('active');
+  document.getElementById('sw' + idx).classList.add('active');
   _active = idx;
 }
 
-// Hide loader once first frame loads
-const f0 = document.getElementById('frame0');
-let _progress = 0;
+// Progress bar animation
+let _pct = 0;
+const loadTick = setInterval(() => {
+  _pct = Math.min(_pct + Math.random() * 12, 90);
+  document.getElementById('loadBar').style.width = _pct + '%';
+}, 200);
 
-function tickLoader(){
-  _progress = Math.min(_progress + Math.random()*15, 90);
-  document.getElementById('loadBar').style.width = _progress + '%';
-}
-const loadTick = setInterval(tickLoader, 200);
-
-f0.addEventListener('load', function(){
+// Hide loader when frame0 loads
+document.getElementById('frame0').addEventListener('load', () => {
   clearInterval(loadTick);
   document.getElementById('loadBar').style.width = '100%';
-  setTimeout(()=>{ document.getElementById('loader').classList.add('done'); }, 400);
+  setTimeout(() => document.getElementById('loader').classList.add('done'), 350);
 });
 
-// Fallback — hide loader after 5s anyway
-setTimeout(()=>{ document.getElementById('loader').classList.add('done'); }, 5000);
+// Fallback
+setTimeout(() => document.getElementById('loader').classList.add('done'), 6000);
+
+// FIX 3: Prevent pull-to-refresh gesture on portal body
+// (The touch events on iframe content won't bubble up)
+document.addEventListener('touchmove', function(e) {
+  if (e.target.closest('.switcher')) {
+    e.preventDefault();
+  }
+}, { passive: false });
 </script>
 </body>
 </html>
