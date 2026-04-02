@@ -16,104 +16,90 @@
   --sans:'Sora',sans-serif;
   --sw:52px;
 }
+/* Portal body — NO scroll, NO overflow issues */
 html,body{
   height:100%;width:100%;
   font-family:var(--sans);
-  background:var(--bg);color:var(--text);
-  /* FIX 1: Allow vertical scroll, prevent pull-to-refresh */
+  background:var(--bg);
   overflow:hidden;
+  /* Prevent pull-to-refresh on portal chrome */
   overscroll-behavior:none;
-  -webkit-overflow-scrolling:touch;
 }
 
-/* FIX 3: Prevent pull-to-refresh on the portal itself */
-body{
-  overscroll-behavior-y:contain;
-  touch-action:pan-x pan-y;
-}
-
-/* TOP SWITCHER */
+/* SWITCHER BAR */
 .switcher{
   position:fixed;top:0;left:0;right:0;
   z-index:1000;height:var(--sw);
   background:var(--surf);
   border-bottom:1px solid var(--border);
   display:flex;align-items:stretch;
-  /* Prevent switcher from triggering scroll */
-  touch-action:none;
+  user-select:none;-webkit-user-select:none;
+  touch-action:none; /* no scroll gestures on switcher */
 }
 .sw-btn{
   flex:1;display:flex;align-items:center;
-  justify-content:center;gap:8px;
+  justify-content:center;gap:6px;
   font-size:15px;font-weight:700;
-  color:var(--muted);cursor:pointer;
-  border:none;border-bottom:3px solid transparent;
-  background:none;font-family:var(--sans);
+  color:var(--muted);
+  background:none;border:none;
+  border-bottom:3px solid transparent;
+  font-family:var(--sans);
   transition:color .2s,border-color .2s;
-  /* Prevent text selection on tap */
-  user-select:none;-webkit-user-select:none;
+  cursor:pointer;
 }
 .sw-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
 .sw-btn:active{opacity:.75;}
 .sw-divider{width:1px;background:var(--border);margin:10px 0;flex-shrink:0;}
 
-/* FRAME WRAPPER — exactly fills remaining space */
+/* FRAME CONTAINER */
 .frame-wrap{
   position:fixed;
   top:var(--sw);left:0;right:0;bottom:0;
-  overflow:hidden;
 }
 
-/* EACH FRAME — FIX 1: overflow-y:scroll for vertical scroll inside */
+/* 
+  THE CRITICAL FIX FOR iOS iframe SCROLL:
+  iframe itself must have overflow:scroll + -webkit-overflow-scrolling:touch
+  This tells iOS to allow scrolling INSIDE the iframe rather than
+  the portal body catching all the touch events.
+*/
 .frame{
   position:absolute;inset:0;
   width:100%;height:100%;
-  border:none;
-  background:var(--bg);
-  /* FIX 1+2: Allow both scroll directions inside iframe */
-  overflow:auto;
+  border:none;background:var(--bg);
+  /* iOS SCROLL FIX */
+  overflow:scroll;
   -webkit-overflow-scrolling:touch;
-  transition:opacity .2s, transform .2s;
+  transition:opacity .2s,transform .2s;
 }
 .frame.hidden{
   opacity:0;
   pointer-events:none;
-  transform:translateX(30px);
+  transform:translateX(20px);
 }
 
-/* LOADING SCREEN */
+/* LOADER */
 #loader{
-  position:fixed;inset:0;
-  background:var(--bg);
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
-  gap:16px;z-index:500;
-  transition:opacity .4s;
+  position:fixed;inset:0;background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:16px;z-index:500;transition:opacity .4s;
 }
 #loader.done{opacity:0;pointer-events:none;}
-.load-logo{font-size:52px;}
-.load-title{font-size:22px;font-weight:700;color:var(--accent);}
-.load-sub{font-size:14px;color:var(--muted);}
-.load-bar{
-  width:200px;height:3px;
-  background:var(--border);border-radius:3px;
-  overflow:hidden;margin-top:8px;
-}
-.load-fill{
-  height:100%;width:0;
-  background:var(--accent);border-radius:3px;
-  transition:width .35s;
-}
+.ld-logo{font-size:52px;}
+.ld-title{font-size:22px;font-weight:700;color:var(--accent);}
+.ld-sub{font-size:14px;color:var(--muted);}
+.ld-bar{width:200px;height:3px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:8px;}
+.ld-fill{height:100%;width:0;background:var(--accent);border-radius:3px;transition:width .3s;}
 </style>
 </head>
 <body>
 
-<!-- LOADING -->
+<!-- LOADER -->
 <div id="loader">
-  <div class="load-logo">⚡</div>
-  <div class="load-title">SP5 Electrical</div>
-  <div class="load-sub">Apps load ho rahi hain...</div>
-  <div class="load-bar"><div class="load-fill" id="loadBar"></div></div>
+  <div class="ld-logo">⚡</div>
+  <div class="ld-title">SP5 Electrical</div>
+  <div class="ld-sub">Loading apps...</div>
+  <div class="ld-bar"><div class="ld-fill" id="ldBar"></div></div>
 </div>
 
 <!-- SWITCHER -->
@@ -123,14 +109,18 @@ body{
   <button class="sw-btn" id="sw1" onclick="switchApp(1)">🏭 SP5 Electrical</button>
 </div>
 
-<!-- FRAMES -->
+<!-- FRAMES
+     scrolling="yes" is the HTML attribute fix for older iOS
+     allow="..." permits all features inside iframe
+-->
 <div class="frame-wrap">
   <iframe
     id="frame0"
     class="frame"
     src="https://poshanm.github.io/OT-dashboard_AI/"
     title="OT Dashboard"
-    sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-top-navigation-by-user-activation"
+    scrolling="yes"
+    allow="fullscreen"
   ></iframe>
   <iframe
     id="frame1"
@@ -138,55 +128,38 @@ body{
     src=""
     data-src="https://poshanm.github.io/sp5-electrical/"
     title="SP5 Electrical"
-    sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-top-navigation-by-user-activation"
+    scrolling="yes"
+    allow="fullscreen"
   ></iframe>
 </div>
 
 <script>
-let _active = 0;
-let _loaded  = [true, false];
+let _active=0, _loaded=[true,false];
 
-function switchApp(idx) {
-  if (idx === _active) return;
-  const frame = document.getElementById('frame' + idx);
-
-  // Lazy load on first switch
-  if (!_loaded[idx]) {
-    _loaded[idx] = true;
-    frame.src = frame.dataset.src;
-  }
-
-  document.getElementById('frame' + _active).classList.add('hidden');
-  frame.classList.remove('hidden');
-  document.getElementById('sw' + _active).classList.remove('active');
-  document.getElementById('sw' + idx).classList.add('active');
-  _active = idx;
+function switchApp(idx){
+  if(idx===_active)return;
+  const f=document.getElementById('frame'+idx);
+  if(!_loaded[idx]){ _loaded[idx]=true; f.src=f.dataset.src; }
+  document.getElementById('frame'+_active).classList.add('hidden');
+  f.classList.remove('hidden');
+  document.getElementById('sw'+_active).classList.remove('active');
+  document.getElementById('sw'+idx).classList.add('active');
+  _active=idx;
 }
 
-// Progress bar animation
-let _pct = 0;
-const loadTick = setInterval(() => {
-  _pct = Math.min(_pct + Math.random() * 12, 90);
-  document.getElementById('loadBar').style.width = _pct + '%';
-}, 200);
+// Progress loader
+let _p=0;
+const _t=setInterval(()=>{
+  _p=Math.min(_p+Math.random()*14,90);
+  document.getElementById('ldBar').style.width=_p+'%';
+},180);
 
-// Hide loader when frame0 loads
-document.getElementById('frame0').addEventListener('load', () => {
-  clearInterval(loadTick);
-  document.getElementById('loadBar').style.width = '100%';
-  setTimeout(() => document.getElementById('loader').classList.add('done'), 350);
+document.getElementById('frame0').addEventListener('load',()=>{
+  clearInterval(_t);
+  document.getElementById('ldBar').style.width='100%';
+  setTimeout(()=>document.getElementById('loader').classList.add('done'),350);
 });
-
-// Fallback
-setTimeout(() => document.getElementById('loader').classList.add('done'), 6000);
-
-// FIX 3: Prevent pull-to-refresh gesture on portal body
-// (The touch events on iframe content won't bubble up)
-document.addEventListener('touchmove', function(e) {
-  if (e.target.closest('.switcher')) {
-    e.preventDefault();
-  }
-}, { passive: false });
+setTimeout(()=>document.getElementById('loader').classList.add('done'),7000);
 </script>
 </body>
 </html>
