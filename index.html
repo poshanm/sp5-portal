@@ -13,153 +13,162 @@
 :root{
   --bg:#080d14;--surf:#0e1520;--border:#1e2d42;
   --text:#dce8f5;--muted:#5a7090;--accent:#3d8ef0;
-  --sans:'Sora',sans-serif;
-  --sw:52px;
+  --sans:'Sora',sans-serif;--sw:52px;
 }
-/* Portal body — NO scroll, NO overflow issues */
 html,body{
-  height:100%;width:100%;
+  width:100%;height:100%;
   font-family:var(--sans);
   background:var(--bg);
+  /* Portal body itself does NOT scroll */
   overflow:hidden;
-  /* Prevent pull-to-refresh on portal chrome */
   overscroll-behavior:none;
 }
 
-/* SWITCHER BAR */
-.switcher{
+/* SWITCHER */
+.sw{
   position:fixed;top:0;left:0;right:0;
   z-index:1000;height:var(--sw);
   background:var(--surf);
   border-bottom:1px solid var(--border);
   display:flex;align-items:stretch;
+  touch-action:none;
   user-select:none;-webkit-user-select:none;
-  touch-action:none; /* no scroll gestures on switcher */
 }
 .sw-btn{
-  flex:1;display:flex;align-items:center;
-  justify-content:center;gap:6px;
-  font-size:15px;font-weight:700;
-  color:var(--muted);
-  background:none;border:none;
-  border-bottom:3px solid transparent;
-  font-family:var(--sans);
+  flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+  font-size:15px;font-weight:700;color:var(--muted);
+  background:none;border:none;border-bottom:3px solid transparent;
+  font-family:var(--sans);cursor:pointer;
   transition:color .2s,border-color .2s;
-  cursor:pointer;
 }
 .sw-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
 .sw-btn:active{opacity:.75;}
-.sw-divider{width:1px;background:var(--border);margin:10px 0;flex-shrink:0;}
+.sw-div{width:1px;background:var(--border);margin:10px 0;flex-shrink:0;}
 
 /* FRAME CONTAINER */
-.frame-wrap{
+.fw{
   position:fixed;
   top:var(--sw);left:0;right:0;bottom:0;
+  overflow:hidden;
 }
 
-/* 
-  THE CRITICAL FIX FOR iOS iframe SCROLL:
-  iframe itself must have overflow:scroll + -webkit-overflow-scrolling:touch
-  This tells iOS to allow scrolling INSIDE the iframe rather than
-  the portal body catching all the touch events.
+/*
+  iOS iframe scroll fix:
+  - The container div needs overflow:scroll + -webkit-overflow-scrolling
+  - We use a wrapper div instead of styling iframe directly
+  - iframe itself is position:absolute filling the wrapper
 */
-.frame{
+.frame-container{
   position:absolute;inset:0;
-  width:100%;height:100%;
-  border:none;background:var(--bg);
-  /* iOS SCROLL FIX */
-  overflow:scroll;
+  overflow-y:scroll;
+  overflow-x:hidden;
   -webkit-overflow-scrolling:touch;
   transition:opacity .2s,transform .2s;
 }
-.frame.hidden{
-  opacity:0;
-  pointer-events:none;
-  transform:translateX(20px);
+.frame-container.hidden{
+  opacity:0;pointer-events:none;transform:translateX(20px);
+}
+.frame-container iframe{
+  /* Iframe fills 200% height — forces the container to be scrollable */
+  /* Actual content height is determined by the page inside */
+  width:100%;
+  /* Min height must be set — otherwise iOS won't scroll */
+  min-height:100%;
+  height:100%;
+  border:none;
+  display:block;
 }
 
 /* LOADER */
-#loader{
+#ldr{
   position:fixed;inset:0;background:var(--bg);
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:16px;z-index:500;transition:opacity .4s;
 }
-#loader.done{opacity:0;pointer-events:none;}
-.ld-logo{font-size:52px;}
-.ld-title{font-size:22px;font-weight:700;color:var(--accent);}
-.ld-sub{font-size:14px;color:var(--muted);}
-.ld-bar{width:200px;height:3px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:8px;}
-.ld-fill{height:100%;width:0;background:var(--accent);border-radius:3px;transition:width .3s;}
+#ldr.done{opacity:0;pointer-events:none;}
+.l-logo{font-size:52px;}
+.l-title{font-size:22px;font-weight:700;color:var(--accent);}
+.l-sub{font-size:14px;color:var(--muted);}
+.l-bar{width:200px;height:3px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:8px;}
+.l-fill{height:100%;width:0;background:var(--accent);border-radius:3px;transition:width .3s;}
 </style>
 </head>
 <body>
 
-<!-- LOADER -->
-<div id="loader">
-  <div class="ld-logo">⚡</div>
-  <div class="ld-title">SP5 Electrical</div>
-  <div class="ld-sub">Loading apps...</div>
-  <div class="ld-bar"><div class="ld-fill" id="ldBar"></div></div>
+<div id="ldr">
+  <div class="l-logo">⚡</div>
+  <div class="l-title">SP5 Electrical</div>
+  <div class="l-sub">Loading apps...</div>
+  <div class="l-bar"><div class="l-fill" id="lFill"></div></div>
 </div>
 
-<!-- SWITCHER -->
-<div class="switcher">
-  <button class="sw-btn active" id="sw0" onclick="switchApp(0)">⚡ OT Dashboard</button>
-  <div class="sw-divider"></div>
-  <button class="sw-btn" id="sw1" onclick="switchApp(1)">🏭 SP5 Electrical</button>
+<div class="sw">
+  <button class="sw-btn active" id="sw0" onclick="go(0)">⚡ OT Dashboard</button>
+  <div class="sw-div"></div>
+  <button class="sw-btn" id="sw1" onclick="go(1)">🏭 SP5 Electrical</button>
 </div>
 
-<!-- FRAMES
-     scrolling="yes" is the HTML attribute fix for older iOS
-     allow="..." permits all features inside iframe
--->
-<div class="frame-wrap">
-  <iframe
-    id="frame0"
-    class="frame"
-    src="https://poshanm.github.io/OT-dashboard_AI/"
-    title="OT Dashboard"
-    scrolling="yes"
-    allow="fullscreen"
-  ></iframe>
-  <iframe
-    id="frame1"
-    class="frame hidden"
-    src=""
-    data-src="https://poshanm.github.io/sp5-electrical/"
-    title="SP5 Electrical"
-    scrolling="yes"
-    allow="fullscreen"
-  ></iframe>
+<div class="fw">
+  <!-- Each frame is a scrollable container with iframe inside -->
+  <div class="frame-container" id="fc0">
+    <iframe
+      src="https://poshanm.github.io/OT-dashboard_AI/"
+      scrolling="yes"
+      allow="fullscreen"
+      id="f0"
+    ></iframe>
+  </div>
+  <div class="frame-container hidden" id="fc1">
+    <iframe
+      src=""
+      data-src="https://poshanm.github.io/sp5-electrical/"
+      scrolling="yes"
+      allow="fullscreen"
+      id="f1"
+    ></iframe>
+  </div>
 </div>
 
 <script>
-let _active=0, _loaded=[true,false];
+let _a=0, _ld=[true,false];
 
-function switchApp(idx){
-  if(idx===_active)return;
-  const f=document.getElementById('frame'+idx);
-  if(!_loaded[idx]){ _loaded[idx]=true; f.src=f.dataset.src; }
-  document.getElementById('frame'+_active).classList.add('hidden');
-  f.classList.remove('hidden');
-  document.getElementById('sw'+_active).classList.remove('active');
-  document.getElementById('sw'+idx).classList.add('active');
-  _active=idx;
+function go(i){
+  if(i===_a)return;
+  // Lazy load
+  if(!_ld[i]){
+    _ld[i]=true;
+    const f=document.getElementById('f'+i);
+    f.src=f.dataset.src;
+  }
+  document.getElementById('fc'+_a).classList.add('hidden');
+  document.getElementById('fc'+i).classList.remove('hidden');
+  document.getElementById('sw'+_a).classList.remove('active');
+  document.getElementById('sw'+i).classList.add('active');
+  _a=i;
 }
 
-// Progress loader
+// Loader
 let _p=0;
 const _t=setInterval(()=>{
   _p=Math.min(_p+Math.random()*14,90);
-  document.getElementById('ldBar').style.width=_p+'%';
+  document.getElementById('lFill').style.width=_p+'%';
 },180);
-
-document.getElementById('frame0').addEventListener('load',()=>{
+document.getElementById('f0').addEventListener('load',()=>{
   clearInterval(_t);
-  document.getElementById('ldBar').style.width='100%';
-  setTimeout(()=>document.getElementById('loader').classList.add('done'),350);
+  document.getElementById('lFill').style.width='100%';
+  setTimeout(()=>document.getElementById('ldr').classList.add('done'),350);
 });
-setTimeout(()=>document.getElementById('loader').classList.add('done'),7000);
+setTimeout(()=>document.getElementById('ldr').classList.add('done'),7000);
+
+/*
+  iOS iframe scroll — additional fix:
+  When user touches the frame-container, ensure scroll propagates correctly.
+  Prevent portal body from catching touch events meant for iframe content.
+*/
+document.querySelectorAll('.frame-container').forEach(fc=>{
+  fc.addEventListener('touchstart', e=>{ e.stopPropagation(); }, {passive:true});
+  fc.addEventListener('touchmove',  e=>{ e.stopPropagation(); }, {passive:true});
+});
 </script>
 </body>
 </html>
