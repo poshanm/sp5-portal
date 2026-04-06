@@ -12,24 +12,20 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
   --bg:#080d14;--surf:#0e1520;--border:#1e2d42;
-  --text:#dce8f5;--muted:#5a7090;--accent:#3d8ef0;
+  --muted:#5a7090;--accent:#3d8ef0;
   --sans:'Sora',sans-serif;--sw:52px;
 }
 html,body{
   width:100%;height:100%;
-  font-family:var(--sans);
-  background:var(--bg);
-  /* Portal body itself does NOT scroll */
-  overflow:hidden;
-  overscroll-behavior:none;
+  font-family:var(--sans);background:var(--bg);
+  overflow:hidden;overscroll-behavior:none;
 }
 
 /* SWITCHER */
 .sw{
   position:fixed;top:0;left:0;right:0;
   z-index:1000;height:var(--sw);
-  background:var(--surf);
-  border-bottom:1px solid var(--border);
+  background:var(--surf);border-bottom:1px solid var(--border);
   display:flex;align-items:stretch;
   touch-action:none;
   user-select:none;-webkit-user-select:none;
@@ -38,14 +34,13 @@ html,body{
   flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
   font-size:15px;font-weight:700;color:var(--muted);
   background:none;border:none;border-bottom:3px solid transparent;
-  font-family:var(--sans);cursor:pointer;
-  transition:color .2s,border-color .2s;
+  font-family:var(--sans);cursor:pointer;transition:color .2s,border-color .2s;
 }
 .sw-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
 .sw-btn:active{opacity:.75;}
 .sw-div{width:1px;background:var(--border);margin:10px 0;flex-shrink:0;}
 
-/* FRAME CONTAINER */
+/* FRAME WRAPPER */
 .fw{
   position:fixed;
   top:var(--sw);left:0;right:0;bottom:0;
@@ -53,30 +48,51 @@ html,body{
 }
 
 /*
-  iOS iframe scroll fix:
-  - The container div needs overflow:scroll + -webkit-overflow-scrolling
-  - We use a wrapper div instead of styling iframe directly
-  - iframe itself is position:absolute filling the wrapper
+  iOS IFRAME SCROLL — FINAL FIX:
+  
+  Key insight: iOS mein iframe scroll karne ke liye 
+  container div ko overflow:scroll chahiye AND
+  iframe ki height container se zyada honi chahiye.
+  
+  Solution: iframe ko height:100% nahi, balki
+  position:absolute + width/height:100% use karo
+  aur container ko WebkitOverflowScrolling:touch do.
+  
+  Lekin asli fix: OT page khud scrollable hai (html+body pe overflow:scroll hai)
+  Toh portal container ko bas overflow:scroll chahiye aur iframe full size.
 */
-.frame-container{
+.fc{
   position:absolute;inset:0;
+  /* 
+    iOS scroll magic:
+    overflow:scroll instead of auto
+    -webkit-overflow-scrolling:touch
+    ye do milke iOS iframe scroll enable karte hain
+  */
   overflow-y:scroll;
   overflow-x:hidden;
   -webkit-overflow-scrolling:touch;
-  transition:opacity .2s,transform .2s;
+  transition:opacity .25s,transform .25s;
 }
-.frame-container.hidden{
-  opacity:0;pointer-events:none;transform:translateX(20px);
+.fc.hidden{
+  opacity:0;pointer-events:none;transform:translateX(15px);
 }
-.frame-container iframe{
-  /* Iframe fills 200% height — forces the container to be scrollable */
-  /* Actual content height is determined by the page inside */
+
+/*
+  Iframe: position absolute, full fill
+  scrolling="yes" attribute bhi lagana hai (HTML attribute)
+*/
+.fc iframe{
+  position:absolute;
+  top:0;left:0;
   width:100%;
-  /* Min height must be set — otherwise iOS won't scroll */
+  /* 
+    HEIGHT FIX: 100% nahi, min-height use karo
+    Ye ensure karta hai ki iOS ko scrollable content mile
+  */
   min-height:100%;
   height:100%;
-  border:none;
-  display:block;
+  border:none;display:block;
 }
 
 /* LOADER */
@@ -109,22 +125,21 @@ html,body{
 </div>
 
 <div class="fw">
-  <!-- Each frame is a scrollable container with iframe inside -->
-  <div class="frame-container" id="fc0">
+  <div class="fc" id="fc0">
     <iframe
+      id="f0"
       src="https://poshanm.github.io/OT-dashboard_AI/"
       scrolling="yes"
       allow="fullscreen"
-      id="f0"
     ></iframe>
   </div>
-  <div class="frame-container hidden" id="fc1">
+  <div class="fc hidden" id="fc1">
     <iframe
+      id="f1"
       src=""
       data-src="https://poshanm.github.io/sp5-electrical/"
       scrolling="yes"
       allow="fullscreen"
-      id="f1"
     ></iframe>
   </div>
 </div>
@@ -134,11 +149,9 @@ let _a=0, _ld=[true,false];
 
 function go(i){
   if(i===_a)return;
-  // Lazy load
   if(!_ld[i]){
     _ld[i]=true;
-    const f=document.getElementById('f'+i);
-    f.src=f.dataset.src;
+    document.getElementById('f'+i).src=document.getElementById('f'+i).dataset.src;
   }
   document.getElementById('fc'+_a).classList.add('hidden');
   document.getElementById('fc'+i).classList.remove('hidden');
@@ -159,16 +172,6 @@ document.getElementById('f0').addEventListener('load',()=>{
   setTimeout(()=>document.getElementById('ldr').classList.add('done'),350);
 });
 setTimeout(()=>document.getElementById('ldr').classList.add('done'),7000);
-
-/*
-  iOS iframe scroll — additional fix:
-  When user touches the frame-container, ensure scroll propagates correctly.
-  Prevent portal body from catching touch events meant for iframe content.
-*/
-document.querySelectorAll('.frame-container').forEach(fc=>{
-  fc.addEventListener('touchstart', e=>{ e.stopPropagation(); }, {passive:true});
-  fc.addEventListener('touchmove',  e=>{ e.stopPropagation(); }, {passive:true});
-});
 </script>
 </body>
 </html>
