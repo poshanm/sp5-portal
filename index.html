@@ -59,17 +59,11 @@ html,body{
   aur container ko WebkitOverflowScrolling:touch do.
   
   Lekin asli fix: OT page khud scrollable hai (html+body pe overflow:scroll hai)
-  Toh portal container ko bas overflow:scroll chahiye aur iframe full size.
+  Isliye portal container scroll na le, gesture seedha iframe ko pass ho.
 */
 .fc{
   position:absolute;inset:0;
-  /* 
-    iOS scroll magic:
-    overflow:scroll instead of auto
-    -webkit-overflow-scrolling:touch
-    ye do milke iOS iframe scroll enable karte hain
-  */
-  overflow-y:scroll;
+  overflow-y:auto;
   overflow-x:hidden;
   -webkit-overflow-scrolling:touch;
   transition:opacity .25s,transform .25s;
@@ -83,8 +77,7 @@ html,body{
   scrolling="yes" attribute bhi lagana hai (HTML attribute)
 */
 .fc iframe{
-  position:absolute;
-  top:0;left:0;
+  position:relative;
   width:100%;
   /* 
     HEIGHT FIX: 100% nahi, min-height use karo
@@ -93,6 +86,19 @@ html,body{
   min-height:100%;
   height:100%;
   border:none;display:block;
+}
+
+/* iOS-only: wrapper gesture capture hatao, iframe ko direct touch do */
+@supports (-webkit-touch-callout: none) {
+  .fc{
+    overflow:hidden;
+  }
+  .fc iframe{
+    position:absolute;
+    top:0;left:0;
+    pointer-events:auto;
+    touch-action:auto;
+  }
 }
 
 /* LOADER */
