@@ -47,20 +47,7 @@ html,body{
   overflow:hidden;
 }
 
-/*
-  iOS IFRAME SCROLL — FINAL FIX:
-  
-  Key insight: iOS mein iframe scroll karne ke liye 
-  container div ko overflow:scroll chahiye AND
-  iframe ki height container se zyada honi chahiye.
-  
-  Solution: iframe ko height:100% nahi, balki
-  position:absolute + width/height:100% use karo
-  aur container ko WebkitOverflowScrolling:touch do.
-  
-  Lekin asli fix: OT page khud scrollable hai (html+body pe overflow:scroll hai)
-  Isliye portal container scroll na le, gesture seedha iframe ko pass ho.
-*/
+/* Frame container defaults (non-iOS) */
 .fc{
   position:absolute;inset:0;
   overflow-y:auto;
@@ -72,17 +59,10 @@ html,body{
   opacity:0;pointer-events:none;transform:translateX(15px);
 }
 
-/*
-  Iframe: position absolute, full fill
-  scrolling="yes" attribute bhi lagana hai (HTML attribute)
-*/
+/* Iframe base sizing */
 .fc iframe{
   position:relative;
   width:100%;
-  /* 
-    HEIGHT FIX: 100% nahi, min-height use karo
-    Ye ensure karta hai ki iOS ko scrollable content mile
-  */
   min-height:100%;
   height:100%;
   border:none;display:block;
