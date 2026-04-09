@@ -1,1 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f172a">
+<title>SP5 Electrical Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
+:root{
+  --hdr:58px;
+  --bg:#0f172a;
+  --border:rgba(255,255,255,0.08);
+  --ot:#38bdf8;
+  --sp5:#a78bfa;
+  --text:#f1f5f9;
+  --muted:#64748b;
+}
+
+body{
+  font-family:'Inter',system-ui,sans-serif;
+  background:var(--bg);
+  overflow:hidden;
+  height:100dvh;width:100%;
+}
+
+/* ── HEADER ── */
+.hdr{
+  position:fixed;top:0;left:0;right:0;
+  height:var(--hdr);
+  background:rgba(15,23,42,0.95);
+  border-bottom:1px solid var(--border);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  display:flex;align-items:center;
+  padding:0 10px;gap:8px;
+  z-index:1000;
+}
+.brand{display:flex;align-items:center;gap:8px;padding:0 4px;flex-shrink:0;}
+.brand-logo{
+  width:32px;height:32px;border-radius:9px;
+  background:linear-gradient(135deg,#38bdf8,#a78bfa);
+  display:flex;align-items:center;justify-content:center;
+  font-size:17px;flex-shrink:0;
+}
+.brand-text{line-height:1.25;}
+.brand-name{font-size:12px;font-weight:700;color:var(--text);}
+.brand-sub{font-size:10px;color:var(--muted);}
+.sep{width:1px;height:28px;background:var(--border);flex-shrink:0;}
+
+.tabs{display:flex;gap:6px;flex:1;}
+.tab{
+  flex:1;height:38px;border-radius:10px;border:1px solid transparent;
+  cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;
+  background:rgba(255,255,255,0.05);color:var(--muted);
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  transition:all .2s;-webkit-tap-highlight-color:transparent;
+  user-select:none;white-space:nowrap;position:relative;
+}
+.tab:active{transform:scale(0.96);}
+
+/* Active states */
+.tab[data-i="0"].active{background:rgba(56,189,248,.15);border-color:rgba(56,189,248,.4);color:#38bdf8;}
+.tab[data-i="1"].active{background:rgba(167,139,250,.15);border-color:rgba(167,139,250,.4);color:#a78bfa;}
+
+/* Loading ring on tab — shows while page loading */
+.tab-loader{
+  width:6px;height:6px;border-radius:50%;
+  border:1.5px solid currentColor;border-top-color:transparent;
+  animation:spin .6s linear infinite;
+  display:none;opacity:0.7;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Ready dot — shows when fully loaded */
+.tab-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:currentColor;opacity:0.7;
+  display:none;
+}
+
+/* States */
+.tab.loading .tab-loader{display:block;}
+.tab.loaded  .tab-dot{display:block;}
+
+/* ── FRAMES ── */
+.fw{position:fixed;top:var(--hdr);bottom:0;left:0;right:0;}
+.frame{
+  position:absolute;inset:0;
+  width:100%;height:100%;
+  border:none;display:none;
+  background:var(--bg);
+}
+.frame.active{display:block;}
+
+/* ── SPLASH ── */
+#splash{
+  position:fixed;inset:0;
+  background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:18px;z-index:9999;
+  transition:opacity .5s ease;
+}
+#splash.hide{opacity:0;pointer-events:none;}
+.sp-logo{
+  width:76px;height:76px;border-radius:22px;
+  background:linear-gradient(135deg,#38bdf8,#a78bfa);
+  display:flex;align-items:center;justify-content:center;
+  font-size:40px;
+  box-shadow:0 0 0 0 rgba(56,189,248,0.4);
+  animation:logoPulse 1.8s ease-in-out infinite;
+}
+@keyframes logoPulse{
+  0%,100%{box-shadow:0 0 30px rgba(56,189,248,.25);}
+  50%{box-shadow:0 0 60px rgba(167,139,250,.4);}
+}
+.sp-title{font-size:24px;font-weight:800;color:var(--text);letter-spacing:-0.5px;}
+.sp-sub{font-size:13px;color:var(--muted);margin-top:-12px;}
+
+/* Two-row progress: shows each page loading status */
+.sp-progress{width:260px;display:flex;flex-direction:column;gap:10px;}
+.sp-item{display:flex;align-items:center;gap:10px;}
+.sp-item-label{font-size:12px;color:var(--muted);flex:1;font-weight:500;}
+.sp-item-bar{flex:2;height:3px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;}
+.sp-item-fill{height:100%;width:0%;border-radius:3px;transition:width .3s ease;}
+.sp-item-fill.ot {background:linear-gradient(90deg,#38bdf8,#7dd3fc);}
+.sp-item-fill.sp5{background:linear-gradient(90deg,#a78bfa,#c4b5fd);}
+.sp-item-status{font-size:11px;font-weight:600;min-width:36px;text-align:right;}
+.sp-item-status.ot {color:#38bdf8;}
+.sp-item-status.sp5{color:#a78bfa;}
+
+.sp-hint{font-size:11px;color:rgba(100,116,139,.6);margin-top:4px;}
+
+/* ── OFFLINE BAR ── */
+#netbar{
+  display:none;position:fixed;
+  top:var(--hdr);left:0;right:0;
+  background:#7f1d1d;border-bottom:1px solid #991b1b;
+  text-align:center;font-size:12px;font-weight:600;
+  color:#fca5a5;padding:5px;z-index:999;
+}
+#netbar.show{display:block;}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="sp-logo">⚡</div>
+  <div class="sp-title">SP5 Electrical</div>
+  <div class="sp-sub">Screening Plant · Electrical Dept</div>
+
+  <div class="sp-progress">
+    <!-- OT Dashboard progress -->
+    <div class="sp-item">
+      <span class="sp-item-label">⚡ OT Dashboard</span>
+      <div class="sp-item-bar"><div class="sp-item-fill ot" id="fillOT"></div></div>
+      <span class="sp-item-status ot" id="stOT">0%</span>
+    </div>
+    <!-- SP5 Electrical progress -->
+    <div class="sp-item">
+      <span class="sp-item-label">🏭 SP5 Electrical</span>
+      <div class="sp-item-bar"><div class="sp-item-fill sp5" id="fillSP5"></div></div>
+      <span class="sp-item-status sp5" id="stSP5">0%</span>
+    </div>
+  </div>
+
+  <div class="sp-hint">Dono apps background mein load ho rahe hain...</div>
+</div>
+
+<!-- OFFLINE BAR -->
+<div id="netbar">📡 Offline — Last cached data shown</div>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="brand">
+    <div class="brand-logo">⚡</div>
+    <div class="brand-text">
+      <div class="brand-name">SP5 Portal</div>
+      <div class="brand-sub">Electrical Dept</div>
+    </div>
+  </div>
+  <div class="sep"></div>
+  <div class="tabs">
+    <button class="tab active loading" data-i="0" onclick="go(0)">
+      <span>⚡</span><span>OT Dashboard</span>
+      <span class="tab-loader"></span>
+      <span class="tab-dot"></span>
+    </button>
+    <button class="tab loading" data-i="1" onclick="go(1)">
+      <span>🏭</span><span>SP5 Electrical</span>
+      <span class="tab-loader"></span>
+      <span class="tab-dot"></span>
+    </button>
+  </div>
+</div>
+
+<!-- FRAMES — both src set immediately = parallel load -->
+<div class="fw">
+  <iframe
+    id="f0" class="frame active"
+    src="https://poshanm.github.io/OT-dashboard_AI/"
+    scrolling="yes" allow="fullscreen"
+  ></iframe>
+  <iframe
+    id="f1" class="frame"
+    src="https://poshanm.github.io/sp5-electrical/"
+    scrolling="yes" allow="fullscreen"
+  ></iframe>
+</div>
+
+<script>
+// ── CONFIG ──
+const APPS = [
+  { id:'f0', fillId:'fillOT',  stId:'stOT',  tabI:0 },
+  { id:'f1', fillId:'fillSP5', stId:'stSP5', tabI:1 },
+];
+
+// ── STATE ──
+let readyCount = 0;
+const totalApps = APPS.length;
+let pcts = [0, 0]; // simulated progress per app
+
+// ── PROGRESS SIMULATION ──
+// Each app gets its own ticker that runs until load fires
+const tickers = APPS.map((app, idx) => {
+  return setInterval(() => {
+    if (pcts[idx] >= 95) return;
+    // Faster at start, slower near end
+    pcts[idx] = Math.min(pcts[idx] + (pcts[idx] < 60 ? 3 : pcts[idx] < 85 ? 1 : 0.3), 95);
+    updateProgress(idx, pcts[idx]);
+  }, 100);
+});
+
+function updateProgress(idx, pct) {
+  const app = APPS[idx];
+  document.getElementById(app.fillId).style.width = pct + '%';
+  document.getElementById(app.stId).textContent = Math.round(pct) + '%';
+}
+
+// ── ON LOAD — fires when each iframe fully loads ──
+APPS.forEach((app, idx) => {
+  const frame = document.getElementById(app.id);
+  frame.addEventListener('load', () => {
+    clearInterval(tickers[idx]);
+    pcts[idx] = 100;
+    updateProgress(idx, 100);
+
+    // Mark tab as loaded
+    const tab = document.querySelector(`.tab[data-i="${app.tabI}"]`);
+    tab.classList.remove('loading');
+    tab.classList.add('loaded');
+
+    readyCount++;
+    if (readyCount === totalApps) hideSplash();
+  }, { once: true });
+});
+
+// ── HIDE SPLASH when both loaded ──
+function hideSplash() {
+  const sp = document.getElementById('splash');
+  sp.classList.add('hide');
+  setTimeout(() => sp.remove(), 600);
+}
+
+// ── FALLBACK: hide splash after 10s regardless ──
+setTimeout(() => {
+  const sp = document.getElementById('splash');
+  if (sp) { sp.classList.add('hide'); setTimeout(() => sp.remove(), 500); }
+  // Mark any still-loading tabs as loaded
+  document.querySelectorAll('.tab.loading').forEach(t => {
+    t.classList.remove('loading');
+    t.classList.add('loaded');
+  });
+}, 10000);
+
+// ── TAB SWITCH ──
+function go(i) {
+  document.querySelectorAll('.frame').forEach(f => f.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('f' + i).classList.add('active');
+  document.querySelector(`.tab[data-i="${i}"]`).classList.add('active');
+  localStorage.setItem('sp5_tab', i);
+}
+
+// ── RESTORE LAST TAB (after splash) ──
+const lastTab = Number(localStorage.getItem('sp5_tab') || 0);
+// Wait for splash to clear before restoring tab
+setTimeout(() => go(lastTab), 100);
+
+// ── OFFLINE ──
+const nb = document.getElementById('netbar');
+window.addEventListener('online',  () => nb.classList.remove('show'));
+window.addEventListener('offline', () => nb.classList.add('show'));
+if (!navigator.onLine) nb.classList.add('show');
+
+// ── SERVICE WORKER ──
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
